@@ -50,6 +50,21 @@ local handle_rubocop_output = function(params)
     return {}
 end
 
+local file_exists = function(name)
+    local f = io.open(name, "r")
+    if f ~= nil then
+        io.close(f)
+        return true
+    else
+        return false
+    end
+end
+
+local command = file_exists("./Gemfile") and "bundle" or "rubocop"
+local args = file_exists("./Gemfile") and
+{ "exec", "rubocop", "-f", "json", "--force-exclusion", "--stdin", "$FILENAME" } or
+{ "-f", "json", "--force-exclusion", "--stdin", "$FILENAME" }
+
 return h.make_builtin({
     name = "rubocop",
     meta = {
@@ -59,8 +74,8 @@ return h.make_builtin({
     method = DIAGNOSTICS,
     filetypes = { "ruby" },
     generator_opts = {
-        command = "rubocop",
-        args = { "-f", "json", "--force-exclusion", "--stdin", "$FILENAME" },
+        command = command,
+        args = args,
         to_stdin = true,
         format = "json",
         check_exit_code = function(code)
